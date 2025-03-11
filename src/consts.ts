@@ -8,7 +8,6 @@ export const NAV_ITEMS = [
   { name: 'Strona główna', href: '/' },
   { name: 'Blog', href: '/blog' },
   { name: 'O mnie', href: '/about' },
-  { name: 'Tagi', href: '/tags' },
 ];
 
 export type PostType = 'text' | 'video' | 'audio' | 'infographic';

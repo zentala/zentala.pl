@@ -42,6 +42,7 @@ test.describe('System tagów', () => {
     
     // Sprawdź, czy grid zawiera linki
     const links = grid.locator('a');
-    await expect(links).toHaveCount({ gte: 0 });
+    const count = await links.count();
+    expect(count).toBeGreaterThanOrEqual(0);
   });
 });
