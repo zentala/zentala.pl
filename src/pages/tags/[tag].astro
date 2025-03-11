@@ -1,0 +1,99 @@
+---
+import BaseHead from '../../components/BaseHead.astro';
+import Header from '../../components/Header.astro';
+import Footer from '../../components/Footer.astro';
+import { SITE_TITLE } from '../../consts';
+import { getCollection } from 'astro:content';
+import MasonryGrid from '../../components/MasonryGrid';
+
+export async function getStaticPaths() {
+  const posts = await getCollection('blog');
+  
+  // Zbierz wszystkie unikalne tagi
+  const uniqueTags = [...new Set(posts.flatMap(post => post.data.tags))];
+  
+  // Pobierz dane o tagach, jeśli istnieją
+  const tagData = await getCollection('tags');
+  const tagDataMap = tagData.reduce((acc, data) => {
+    const tagId = data.id;
+    acc[tagId] = data.data;
+    return acc;
+  }, {} as Record<string, any>);
+  
+  // Stwórz ścieżki dla każdego tagu
+  return uniqueTags.map(tag => {
+    const tagInfo = tagDataMap[tag] || { name: tag };
+    const filteredPosts = posts
+      .filter(post => post.data.tags.includes(tag))
+      .sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf());
+    
+    return {
+      params: { tag },
+      props: { 
+        posts: filteredPosts,
+        tagInfo,
+      }
+    };
+  });
+}
+
+const { tag } = Astro.params;
+const { posts, tagInfo } = Astro.props;
+---
+
+<!doctype html>
+<html lang="pl">
+	<head>
+		<BaseHead 
+      title={`${tagInfo.name || tag} | ${SITE_TITLE}`} 
+      description={tagInfo.description || `Artykuły na temat: ${tagInfo.name || tag}`} 
+    />
+	</head>
+	<body class="bg-gray-100 dark:bg-gray-900">
+		<Header />
+		<main class="max-w-7xl mx-auto px-4 py-8">
+			<section class="mb-12">
+				<h1 class="text-4xl font-bold mb-4 text-gray-900 dark:text-white">
+					{tagInfo.name || tag}
+				</h1>
+				{tagInfo.description && (
+					<p class="text-xl text-gray-700 dark:text-gray-300 mb-8">
+						{tagInfo.description}
+					</p>
+				)}
+				
+				<div class="mb-6 flex justify-between items-center">
+					<p class="text-gray-600 dark:text-gray-400">
+						Znaleziono {posts.length} {posts.length === 1 ? 'artykuł' : posts.length < 5 ? 'artykuły' : 'artykułów'}
+					</p>
+					<a href="/tags" class="text-blue-600 dark:text-blue-400 hover:underline">
+						Wszystkie tagi
+					</a>
+				</div>
+
+				<MasonryGrid posts={posts} client:load />
+			</section>
+
+      <section class="mb-12">
+        <h2 class="text-2xl font-bold mb-6 text-gray-900 dark:text-white">Powiązane tagi</h2>
+        <div class="flex flex-wrap gap-3">
+          {
+            // Pobierz unikalne tagi z postów z danego tagu, z wyjątkiem bieżącego tagu
+            [...new Set(posts.flatMap(post => post.data.tags))]
+              .filter(t => t !== tag)
+              .slice(0, 10)
+              .map(relatedTag => (
+                <a 
+                  href={`/tags/${relatedTag}`} 
+                  class="px-4 py-2 bg-white dark:bg-gray-800 rounded-full text-gray-700 dark:text-gray-300 shadow hover:bg-blue-100 dark:hover:bg-blue-900 transition"
+                >
+                  {relatedTag}
+                </a>
+              ))
+          }
+        </div>
+      </section>
+		</main>
+		<Footer />
+	</body>
+</html>

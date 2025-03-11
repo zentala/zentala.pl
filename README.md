@@ -1,68 +1,106 @@
-# Astro Starter Kit: Blog
+# Zentala.pl - Blog o innowacjach
 
-```sh
-npm create astro@latest -- --template blog
-```
+Blog poświęcony innowacjom społecznym, politycznym, administracyjnym i innym, które mogą pomóc Polsce w rozwoju.
 
-[![Open in StackBlitz](https://developer.stackblitz.com/img/open_in_stackblitz.svg)](https://stackblitz.com/github/withastro/astro/tree/latest/examples/blog)
-[![Open with CodeSandbox](https://assets.codesandbox.io/github/button-edit-lime.svg)](https://codesandbox.io/p/sandbox/github/withastro/astro/tree/latest/examples/blog)
-[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/withastro/astro?devcontainer_path=.devcontainer/blog/devcontainer.json)
+## 🚀 Funkcjonalności
 
-> 🧑‍🚀 **Seasoned astronaut?** Delete this file. Have fun!
+- ✅ Układ masonry na stronie głównej (jak Pinterest)
+- ✅ Responsywny design (mobile-first)
+- ✅ System tagów i linkowania między artykułami
+- ✅ Wsparcie dla różnych typów wpisów (tekst, wideo, audio)
+- ✅ Wsparcie dla Markdown i MDX
+- ✅ Optymalizacja pod SEO
+- ✅ Wsparcie dla RSS
+- ✅ Sitemap
+- ✅ Ciemny motyw
+- ✅ Wysoka wydajność
 
-![blog](https://github.com/withastro/astro/assets/2244813/ff10799f-a816-4703-b967-c78997e8323d)
-
-Features:
-
-- ✅ Minimal styling (make it your own!)
-- ✅ 100/100 Lighthouse performance
-- ✅ SEO-friendly with canonical URLs and OpenGraph data
-- ✅ Sitemap support
-- ✅ RSS Feed support
-- ✅ Markdown & MDX support
-
-## 🚀 Project Structure
-
-Inside of your Astro project, you'll see the following folders and files:
+## 🏗️ Struktura projektu
 
 ```text
-├── public/
+├── public/              # Zasoby statyczne
 ├── src/
-│   ├── components/
-│   ├── content/
-│   ├── layouts/
-│   └── pages/
-├── astro.config.mjs
-├── README.md
-├── package.json
-└── tsconfig.json
+│   ├── components/      # Komponenty Astro i React
+│   ├── content/         # Treści w formacie Markdown/MDX
+│   │   ├── blog/        # Artykuły
+│   │   └── tags/        # Definicje tagów
+│   ├── layouts/         # Szablony stron
+│   ├── pages/           # Strony
+│   ├── styles/          # Style globalne
+│   └── utils/           # Funkcje pomocnicze
+├── astro.config.mjs     # Konfiguracja Astro
+├── tailwind.config.js   # Konfiguracja Tailwind CSS
+└── tsconfig.json        # Konfiguracja TypeScript
 ```
 
-Astro looks for `.astro` or `.md` files in the `src/pages/` directory. Each page is exposed as a route based on its file name.
+## 💻 Komendy
 
-There's nothing special about `src/components/`, but that's where we like to put any Astro/React/Vue/Svelte/Preact components.
+Wszystkie komendy uruchamiane są z katalogu głównego projektu:
 
-The `src/content/` directory contains "collections" of related Markdown and MDX documents. Use `getCollection()` to retrieve posts from `src/content/blog/`, and type-check your frontmatter using an optional schema. See [Astro's Content Collections docs](https://docs.astro.build/en/guides/content-collections/) to learn more.
+| Komenda                  | Opis                                              |
+| :----------------------- | :------------------------------------------------ |
+| `npm install`            | Instalacja zależności                             |
+| `npm run dev`            | Uruchomienie serwera deweloperskiego (`localhost:4321`) |
+| `npm run build`          | Zbudowanie wersji produkcyjnej do katalogu `./dist/` |
+| `npm run preview`        | Podgląd wersji produkcyjnej lokalnie              |
+| `npm run astro add ...`  | Dodawanie integracji (np. `npm run astro add react`) |
 
-Any static assets, like images, can be placed in the `public/` directory.
+## 📝 Dodawanie treści
 
-## 🧞 Commands
+### Artykuły
 
-All commands are run from the root of the project, from a terminal:
+Artykuły dodawane są w katalogu `src/content/blog/` w formacie Markdown (`.md`) lub MDX (`.mdx`). Każdy artykuł powinien zawierać nagłówek frontmatter z metadanymi:
 
-| Command                   | Action                                           |
-| :------------------------ | :----------------------------------------------- |
-| `npm install`             | Installs dependencies                            |
-| `npm run dev`             | Starts local dev server at `localhost:4321`      |
-| `npm run build`           | Build your production site to `./dist/`          |
-| `npm run preview`         | Preview your build locally, before deploying     |
-| `npm run astro ...`       | Run CLI commands like `astro add`, `astro check` |
-| `npm run astro -- --help` | Get help using the Astro CLI                     |
+```markdown
+---
+title: Tytuł artykułu
+description: Krótki opis artykułu
+pubDate: 2023-11-03
+updatedDate: 2023-11-03
+heroImage: /sciezka/do/obrazka.jpg
+heroVideo: https://youtube.com/embed/xxx  # opcjonalnie
+heroAudio: /sciezka/do/audio.mp3  # opcjonalnie
+tags: ["tag1", "tag2"]
+type: text  # text, video, audio, infographic
+size: medium  # small, medium, large
+featured: false  # czy post jest wyróżniony
+---
 
-## 👀 Want to learn more?
+Treść artykułu w formacie Markdown...
+```
 
-Check out [our documentation](https://docs.astro.build) or jump into our [Discord server](https://astro.build/chat).
+### Tagi
 
-## Credit
+Tagi definiowane są w katalogu `src/content/tags/` jako pliki JSON:
 
-This theme is based off of the lovely [Bear Blog](https://github.com/HermanMartinus/bearblog/).
+```json
+{
+  "name": "Nazwa tagu",
+  "description": "Opis tagu"
+}
+```
+
+## 🚀 Wdrażanie na GitHub Pages
+
+1. Zbuduj wersję produkcyjną:
+   ```
+   npm run build
+   ```
+
+2. Wdrażanie za pomocą GitHub Actions (zapoznaj się z plikiem workflow w `.github/workflows/deploy.yml`)
+
+## 🔧 Konfiguracja
+
+Główne ustawienia projektu znajdują się w `astro.config.mjs`.
+
+## 👨‍💻 Technologie
+
+- [Astro](https://astro.build/)
+- [React](https://reactjs.org/)
+- [Tailwind CSS](https://tailwindcss.com/)
+- [TypeScript](https://www.typescriptlang.org/)
+- [MDX](https://mdxjs.com/)
+
+## 📝 Licencja
+
+Ten projekt jest udostępniony na licencji MIT. Szczegóły w pliku LICENSE.

@@ -1,0 +1,67 @@
+---
+import BaseHead from '../../components/BaseHead.astro';
+import Header from '../../components/Header.astro';
+import Footer from '../../components/Footer.astro';
+import { SITE_TITLE } from '../../consts';
+import { getCollection } from 'astro:content';
+
+// Pobierz wszystkie wpisy
+const posts = await getCollection('blog');
+
+// Zbierz wszystkie unikalne tagi i zlicz ich wystąpienia
+const tagCounts = posts.reduce((acc, post) => {
+  post.data.tags.forEach(tag => {
+    acc[tag] = (acc[tag] || 0) + 1;
+  });
+  return acc;
+}, {} as Record<string, number>);
+
+// Posortuj tagi według liczby wpisów (malejąco)
+const sortedTags = Object.entries(tagCounts)
+  .sort((a, b) => b[1] - a[1])
+  .map(([tag, count]) => ({ tag, count }));
+
+// Pobierz dane o tagach, jeśli istnieją
+const tagData = await getCollection('tags');
+const tagDataMap = tagData.reduce((acc, data) => {
+  const tagId = data.id;
+  acc[tagId] = data.data;
+  return acc;
+}, {} as Record<string, any>);
+---
+
+<!doctype html>
+<html lang="pl">
+	<head>
+		<BaseHead title={`Tagi | ${SITE_TITLE}`} description="Przeglądaj artykuły według tagów" />
+	</head>
+	<body class="bg-gray-100 dark:bg-gray-900">
+		<Header />
+		<main class="max-w-4xl mx-auto px-4 py-8">
+			<h1 class="text-4xl font-bold mb-8 text-gray-900 dark:text-white">Wszystkie tagi</h1>
+
+			<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+				{sortedTags.map(({ tag, count }) => {
+					const tagInfo = tagDataMap[tag] || { name: tag };
+					return (
+						<a 
+							href={`/tags/${tag}`}
+							class="block bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 hover:shadow-lg transition"
+						>
+							<div class="flex justify-between items-start mb-3">
+								<h2 class="text-xl font-bold text-gray-900 dark:text-white">{tagInfo.name}</h2>
+								<span class="bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 text-sm rounded-full px-3 py-1">
+									{count} {count === 1 ? 'artykuł' : count < 5 ? 'artykuły' : 'artykułów'}
+								</span>
+							</div>
+							{tagInfo.description && (
+								<p class="text-gray-600 dark:text-gray-400">{tagInfo.description}</p>
+							)}
+						</a>
+					);
+				})}
+			</div>
+		</main>
+		<Footer />
+	</body>
+</html>
