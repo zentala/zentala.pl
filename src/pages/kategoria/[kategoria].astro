@@ -1,0 +1,126 @@
+---
+import BaseHead from '../../components/BaseHead.astro';
+import Header from '../../components/Header.astro';
+import Footer from '../../components/Footer.astro';
+import { SITE_TITLE } from '../../consts';
+import { getCollection } from 'astro:content';
+import MasonryGrid from '../../components/MasonryGrid';
+
+// Definicja kategorii i ich mapowanie na tagi
+const KATEGORIE = {
+  'innowacje-spoleczne': {
+    title: 'Innowacje społeczne',
+    description: 'Pomysły i rozwiązania służące rozwiązywaniu problemów społecznych w Polsce',
+    tags: ['innowacje-spoleczne', 'społeczeństwo', 'pomoc-społeczna', 'edukacja', 'zdrowie'],
+    image: '/images/categories/innowacje-spoleczne.jpg'
+  },
+  'polityka': {
+    title: 'Polityka',
+    description: 'Innowacje w dziedzinie polityki i zarządzania państwem',
+    tags: ['polityka', 'demokracja', 'wybory', 'prawo', 'konstytucja'],
+    image: '/images/categories/polityka.jpg'
+  },
+  'administracja': {
+    title: 'Administracja',
+    description: 'Usprawnianie procesów administracyjnych i biurokratycznych',
+    tags: ['administracja', 'biurokracja', 'e-administracja', 'urzędy', 'procedury'],
+    image: '/images/categories/administracja.jpg'
+  },
+  'technologia': {
+    title: 'Technologia',
+    description: 'Wykorzystanie technologii w służbie społeczeństwa',
+    tags: ['technologia', 'innowacje', 'it', 'ai', 'cyfryzacja'],
+    image: '/images/categories/technologia.jpg'
+  }
+};
+
+export async function getStaticPaths() {
+  return Object.keys(KATEGORIE).map(kategoria => ({
+    params: { kategoria },
+    props: { kategoriaInfo: KATEGORIE[kategoria] }
+  }));
+}
+
+const { kategoria } = Astro.params;
+const { kategoriaInfo } = Astro.props;
+
+// Pobierz posty dla tej kategorii
+const posts = await getCollection('blog');
+const postsWKategorii = posts.filter(post => {
+  const postTags = post.data.tags || [];
+  return kategoriaInfo.tags.some(tag => postTags.includes(tag));
+}).sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf());
+
+// Powiązane kategorie
+const relatedKategorie = Object.entries(KATEGORIE)
+  .filter(([key]) => key !== kategoria)
+  .map(([key, info]) => ({
+    slug: key,
+    ...info
+  }))
+  .slice(0, 3);
+---
+
+<!doctype html>
+<html lang="pl">
+	<head>
+		<BaseHead 
+      title={`${kategoriaInfo.title} | ${SITE_TITLE}`} 
+      description={kategoriaInfo.description}
+    />
+	</head>
+	<body>
+		<Header />
+    <div class="bg-gradient-to-b from-primary-very-light to-transparent dark:from-primary-dark/10 dark:to-transparent">
+      <div class="container py-12">
+        <div class="max-w-3xl mx-auto">
+          <h1 class="text-3xl md:text-4xl font-bold mb-4">{kategoriaInfo.title}</h1>
+          <p class="text-lg mb-8 text-neutral-700 dark:text-neutral-300">{kategoriaInfo.description}</p>
+          
+          <div class="flex items-center text-sm text-neutral-600 dark:text-neutral-400">
+            <span class="mr-4">
+              <strong>{postsWKategorii.length}</strong> {postsWKategorii.length === 1 ? 'artykuł' : postsWKategorii.length < 5 ? 'artykuły' : 'artykułów'}
+            </span>
+            <div class="flex space-x-2">
+              {kategoriaInfo.tags.slice(0, 3).map(tag => (
+                <a href={`/tag/${tag}`} class="tag">{tag}</a>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+		<main class="container py-12">
+      {postsWKategorii.length > 0 ? (
+        <section class="mb-16">
+          <MasonryGrid posts={postsWKategorii} client:load />
+        </section>
+      ) : (
+        <div class="text-center py-12">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 mx-auto text-neutral-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          </svg>
+          <h2 class="text-xl font-semibold mb-2">Brak artykułów w tej kategorii</h2>
+          <p class="mb-6 text-neutral-600 dark:text-neutral-400">Wkrótce pojawią się nowe wpisy w tej kategorii.</p>
+          <a href="/" class="btn btn-primary">Powrót do strony głównej</a>
+        </div>
+      )}
+      
+      <section>
+        <h2 class="text-2xl font-bold mb-6">Inne kategorie</h2>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-6">
+          {relatedKategorie.map(kat => (
+            <a href={`/kategoria/${kat.slug}`} class="block bg-white dark:bg-neutral-800 rounded-lg shadow overflow-hidden hover:shadow-lg transition-shadow">
+              <div class="p-5">
+                <h3 class="text-lg font-semibold mb-2">{kat.title}</h3>
+                <p class="text-sm text-neutral-600 dark:text-neutral-400">{kat.description}</p>
+              </div>
+            </a>
+          ))}
+        </div>
+      </section>
+		</main>
+		<Footer />
+	</body>
+</html>

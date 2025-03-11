@@ -1,0 +1,176 @@
+---
+import BaseHead from '../../components/BaseHead.astro';
+import Header from '../../components/Header.astro';
+import Footer from '../../components/Footer.astro';
+import { SITE_TITLE } from '../../consts';
+import { getCollection } from 'astro:content';
+
+// Pobierz wszystkie wpisy
+const posts = await getCollection('blog');
+
+// Zbierz wszystkie unikalne tagi i zlicz ich wystąpienia
+const tagCounts = posts.reduce((acc, post) => {
+  const tags = post.data.tags || [];
+  tags.forEach(tag => {
+    acc[tag] = (acc[tag] || 0) + 1;
+  });
+  return acc;
+}, {} as Record<string, number>);
+
+// Posortuj tagi według liczby wpisów (malejąco)
+const sortedTags = Object.entries(tagCounts)
+  .sort((a, b) => b[1] - a[1])
+  .map(([tag, count]) => ({ tag, count }));
+
+// Pobierz dane o tagach, jeśli istnieją
+const tagCollection = await getCollection('tags');
+const tagDataMap = tagCollection.reduce((acc, data) => {
+  const tagId = data.id;
+  acc[tagId] = data.data;
+  return acc;
+}, {} as Record<string, any>);
+
+// Pogrupuj tagi według liczby postów
+const popularTags = sortedTags.filter(({count}) => count >= 5);
+const commonTags = sortedTags.filter(({count}) => count >= 2 && count < 5);
+const rareTags = sortedTags.filter(({count}) => count === 1);
+---
+
+<!doctype html>
+<html lang="pl">
+	<head>
+		<BaseHead title={`Tagi | ${SITE_TITLE}`} description="Przeglądaj artykuły według tagów" />
+    <style>
+      .tag-cloud {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1rem;
+      }
+      
+      .tag-item {
+        transition: all 0.2s ease-in-out;
+      }
+      
+      .tag-item:hover {
+        transform: translateY(-2px);
+      }
+      
+      .tag-xs { font-size: 0.75rem; }
+      .tag-sm { font-size: 0.875rem; }
+      .tag-md { font-size: 1rem; }
+      .tag-lg { font-size: 1.125rem; }
+      .tag-xl { font-size: 1.25rem; }
+      .tag-2xl { font-size: 1.5rem; }
+    </style>
+	</head>
+	<body>
+		<Header />
+    <div class="bg-gradient-to-b from-primary-very-light to-transparent dark:from-primary-dark/10 dark:to-transparent">
+      <div class="container py-12">
+        <div class="max-w-3xl mx-auto text-center">
+          <h1 class="text-3xl md:text-4xl font-bold mb-4">Wszystkie tagi</h1>
+          <p class="text-lg text-neutral-700 dark:text-neutral-300">
+            Przeglądaj artykuły według tagów, aby znaleźć tematy, które Cię interesują.
+          </p>
+        </div>
+      </div>
+    </div>
+    
+		<main class="container py-12">
+      <section class="mb-16">
+        <h2 class="text-2xl font-bold mb-6">Popularne tagi</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {popularTags.map(({ tag, count }) => {
+            const tagInfo = tagDataMap[tag] || { name: tag };
+            return (
+              <a 
+                href={`/tag/${tag}`}
+                class="bg-white dark:bg-neutral-800 p-5 rounded-lg shadow hover:shadow-lg transition flex justify-between items-start gap-4 tag-item"
+              >
+                <div>
+                  <h3 class="text-xl font-bold text-neutral-900 dark:text-neutral-100 mb-1">#{tagInfo.name}</h3>
+                  {tagInfo.description && (
+                    <p class="text-sm text-neutral-600 dark:text-neutral-400 mb-2">{tagInfo.description}</p>
+                  )}
+                </div>
+                <span class="bg-primary-very-light dark:bg-primary-dark/20 text-primary-color dark:text-primary-light text-sm rounded-full px-3 py-1 flex-shrink-0">
+                  {count} {count === 1 ? 'artykuł' : count < 5 ? 'artykuły' : 'artykułów'}
+                </span>
+              </a>
+            );
+          })}
+        </div>
+      </section>
+
+      <section class="mb-16">
+        <h2 class="text-2xl font-bold mb-6">Chmura tagów</h2>
+        <div class="bg-white dark:bg-neutral-800 p-6 rounded-lg shadow">
+          <div class="tag-cloud justify-center">
+            {sortedTags.map(({ tag, count }) => {
+              const tagInfo = tagDataMap[tag] || { name: tag };
+              // Określanie klasy rozmiaru tagu na podstawie liczby artykułów
+              let sizeClass;
+              if (count >= 10) sizeClass = 'tag-2xl';
+              else if (count >= 7) sizeClass = 'tag-xl';
+              else if (count >= 5) sizeClass = 'tag-lg';
+              else if (count >= 3) sizeClass = 'tag-md';
+              else if (count >= 2) sizeClass = 'tag-sm';
+              else sizeClass = 'tag-xs';
+              
+              return (
+                <a 
+                  href={`/tag/${tag}`}
+                  class={`tag ${sizeClass} font-${count > 3 ? 'semibold' : 'normal'}`}
+                >
+                  {tagInfo.name}
+                </a>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+      
+      <section class="mb-16">
+        <h2 class="text-2xl font-bold mb-6">Kategorie</h2>
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+          <a href="/kategoria/innowacje-spoleczne" class="p-5 rounded-lg shadow hover:shadow-lg transition-shadow bg-gradient-to-r from-blue-500 to-blue-600 text-white">
+            <h3 class="text-lg font-semibold mb-2">Innowacje społeczne</h3>
+            <p class="text-sm text-blue-100">Rozwiązania dla problemów społecznych</p>
+          </a>
+          <a href="/kategoria/polityka" class="p-5 rounded-lg shadow hover:shadow-lg transition-shadow bg-gradient-to-r from-indigo-500 to-indigo-600 text-white">
+            <h3 class="text-lg font-semibold mb-2">Polityka</h3>
+            <p class="text-sm text-indigo-100">Innowacje w zarządzaniu państwem</p>
+          </a>
+          <a href="/kategoria/administracja" class="p-5 rounded-lg shadow hover:shadow-lg transition-shadow bg-gradient-to-r from-cyan-500 to-cyan-600 text-white">
+            <h3 class="text-lg font-semibold mb-2">Administracja</h3>
+            <p class="text-sm text-cyan-100">Usprawnianie procesów administracyjnych</p>
+          </a>
+          <a href="/kategoria/technologia" class="p-5 rounded-lg shadow hover:shadow-lg transition-shadow bg-gradient-to-r from-emerald-500 to-emerald-600 text-white">
+            <h3 class="text-lg font-semibold mb-2">Technologia</h3>
+            <p class="text-sm text-emerald-100">Nowe technologie dla społeczeństwa</p>
+          </a>
+        </div>
+      </section>
+      
+      <section>
+        <h2 class="text-2xl font-bold mb-6">Wszystkie tagi alfabetycznie</h2>
+        <div class="bg-white dark:bg-neutral-800 rounded-lg shadow p-6">
+          <div class="flex flex-wrap gap-2">
+            {sortedTags
+              .sort((a, b) => a.tag.localeCompare(b.tag))
+              .map(({ tag, count }) => {
+                const tagInfo = tagDataMap[tag] || { name: tag };
+                return (
+                  <a href={`/tag/${tag}`} class="tag">
+                    {tagInfo.name} <span class="text-neutral-500 dark:text-neutral-400 text-xs">({count})</span>
+                  </a>
+                );
+              })
+            }
+          </div>
+        </div>
+      </section>
+		</main>
+		<Footer />
+	</body>
+</html>

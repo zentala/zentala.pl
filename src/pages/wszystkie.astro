@@ -1,0 +1,299 @@
+---
+import BaseHead from '../components/BaseHead.astro';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+import { SITE_TITLE } from '../consts';
+import { getCollection } from 'astro:content';
+import MasonryGrid from '../components/MasonryGrid';
+import { formatDate } from '../utils/date';
+
+// Pobierz wszystkie wpisy, posortowane według daty publikacji (od najnowszych)
+const posts = await getCollection('blog');
+const sortedPosts = posts.sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf());
+
+// Grupowanie wpisów wg roku
+const postsByYear = sortedPosts.reduce((acc, post) => {
+  const year = new Date(post.data.pubDate).getFullYear();
+  if (!acc[year]) acc[year] = [];
+  acc[year].push(post);
+  return acc;
+}, {} as Record<number, typeof posts>);
+
+// Sortowanie lat malejąco
+const years = Object.keys(postsByYear).map(Number).sort((a, b) => b - a);
+
+// Pobierz unikalne typy postów i zlicz ich wystąpienia
+const typeCounts = sortedPosts.reduce((acc, post) => {
+  const type = post.data.type || 'text';
+  acc[type] = (acc[type] || 0) + 1;
+  return acc;
+}, {} as Record<string, number>);
+
+// Przygotuj mapę ikon typów
+const typeIcons = {
+  text: '<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" /></svg>',
+  video: '<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>',
+  audio: '<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15.536a5 5 0 001.414 1.414m-2.829-9.9a9 9 0 0112.728 0" /></svg>',
+  infographic: '<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>'
+};
+
+// Etykiety typów po polsku
+const typeLabels = {
+  text: 'Tekst',
+  video: 'Wideo',
+  audio: 'Audio',
+  infographic: 'Infografika'
+};
+---
+
+<!doctype html>
+<html lang="pl">
+	<head>
+		<BaseHead title={`Wszystkie artykuły | ${SITE_TITLE}`} description="Pełna lista artykułów o innowacjach społecznych, politycznych i administracyjnych" />
+    <style>
+      .timeline-line {
+        position: absolute;
+        left: 7px;
+        top: 24px;
+        bottom: 0;
+        width: 2px;
+        background-color: var(--neutral-300);
+      }
+      
+      .year-marker {
+        position: relative;
+        padding-left: 28px;
+        margin-bottom: 2rem;
+      }
+      
+      .year-marker::before {
+        content: "";
+        position: absolute;
+        left: 0;
+        top: 8px;
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        background-color: var(--primary-color);
+        z-index: 2;
+      }
+      
+      .post-list {
+        border-left: 2px solid var(--neutral-300);
+        padding-left: 1.5rem;
+        margin-left: 7px;
+      }
+      
+      .post-item {
+        position: relative;
+        margin-bottom: 1.5rem;
+        transition: transform 0.2s;
+      }
+      
+      .post-item::before {
+        content: "";
+        position: absolute;
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background-color: var(--neutral-300);
+        left: -2rem;
+        top: 0.5rem;
+      }
+      
+      .post-item:hover {
+        transform: translateX(3px);
+      }
+      
+      .post-item:hover::before {
+        background-color: var(--primary-color);
+      }
+      
+      .post-date {
+        font-size: 0.875rem;
+        color: var(--neutral-500);
+      }
+      
+      .post-title {
+        font-weight: 600;
+        margin-bottom: 0.25rem;
+      }
+      
+      .type-filter {
+        transition: all 0.2s;
+      }
+      
+      .type-filter.active {
+        background-color: var(--primary-color);
+        color: white;
+      }
+    </style>
+	</head>
+	<body>
+		<Header />
+    <div class="bg-gradient-to-b from-primary-very-light to-transparent dark:from-primary-dark/10 dark:to-transparent">
+      <div class="container py-12">
+        <div class="max-w-3xl mx-auto">
+          <h1 class="text-3xl md:text-4xl font-bold mb-4">Wszystkie artykuły</h1>
+          <p class="text-lg mb-6 text-neutral-700 dark:text-neutral-300">
+            Pełna lista wszystkich artykułów, posortowana według daty publikacji.
+          </p>
+          
+          <div class="flex flex-col sm:flex-row gap-4 mt-8">
+            <div class="flex items-center">
+              <span class="text-sm text-neutral-600 dark:text-neutral-400 mr-4">
+                <strong>{sortedPosts.length}</strong> {sortedPosts.length === 1 ? 'artykuł' : sortedPosts.length < 5 ? 'artykuły' : 'artykułów'}
+              </span>
+            </div>
+            
+            <div class="flex flex-wrap gap-2">
+              <button 
+                id="filter-all" 
+                class="type-filter active bg-white dark:bg-neutral-800 rounded-full px-4 py-2 text-sm shadow"
+              >
+                Wszystkie
+              </button>
+              
+              {Object.entries(typeCounts).map(([type, count]) => (
+                <button 
+                  id={`filter-${type}`}
+                  class="type-filter flex items-center gap-2 bg-white dark:bg-neutral-800 rounded-full px-4 py-2 text-sm shadow"
+                  data-type={type}
+                >
+                  <Fragment set:html={typeIcons[type as keyof typeof typeIcons] || typeIcons.text} />
+                  {typeLabels[type as keyof typeof typeLabels] || type}
+                  <span class="text-neutral-500">({count})</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+		<main class="container py-12">
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+        <div class="md:col-span-3">
+          <div class="position-relative">
+            {years.map(year => (
+              <div id={`year-${year}`}>
+                <h2 class="year-marker text-2xl font-bold">{year}</h2>
+                <div class="post-list">
+                  {postsByYear[year].map(post => (
+                    <div class="post-item" data-type={post.data.type || 'text'}>
+                      <a href={`/${post.slug}`} class="block">
+                        <div class="flex justify-between items-start mb-1">
+                          <div class="post-title text-lg">{post.data.title}</div>
+                          <div class="flex items-center gap-2">
+                            <span class="post-date">{formatDate(post.data.pubDate)}</span>
+                            <div class="flex-shrink-0">
+                              <Fragment set:html={typeIcons[post.data.type as keyof typeof typeIcons] || typeIcons.text} />
+                            </div>
+                          </div>
+                        </div>
+                        <p class="text-sm text-neutral-600 dark:text-neutral-400 line-clamp-2">
+                          {post.data.description}
+                        </p>
+                        {post.data.tags && post.data.tags.length > 0 && (
+                          <div class="flex flex-wrap gap-2 mt-2">
+                            {post.data.tags.slice(0, 3).map(tag => (
+                              <a 
+                                href={`/tag/${tag}`}
+                                class="text-xs bg-neutral-100 dark:bg-neutral-700 rounded-full px-2 py-1 text-neutral-700 dark:text-neutral-300 hover:bg-primary-very-light dark:hover:bg-primary-dark/20"
+                                onClick={e => e.stopPropagation()}
+                              >
+                                {tag}
+                              </a>
+                            ))}
+                          </div>
+                        )}
+                      </a>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+        
+        <div class="hidden md:block">
+          <div class="sticky top-8">
+            <h3 class="text-lg font-bold mb-4">Przejdź do roku</h3>
+            <div class="bg-white dark:bg-neutral-800 rounded-lg shadow p-4">
+              <div class="flex flex-col gap-2">
+                {years.map(year => (
+                  <a 
+                    href={`#year-${year}`} 
+                    class="py-2 px-4 hover:bg-neutral-100 dark:hover:bg-neutral-700 rounded"
+                  >
+                    {year}
+                  </a>
+                ))}
+              </div>
+            </div>
+            
+            <h3 class="text-lg font-bold mt-8 mb-4">Przeglądaj wg kategorii</h3>
+            <div class="bg-white dark:bg-neutral-800 rounded-lg shadow">
+              <a href="/kategoria/innowacje-spoleczne" class="block border-b border-neutral-200 dark:border-neutral-700 p-4 hover:bg-neutral-100 dark:hover:bg-neutral-700">
+                Innowacje społeczne
+              </a>
+              <a href="/kategoria/polityka" class="block border-b border-neutral-200 dark:border-neutral-700 p-4 hover:bg-neutral-100 dark:hover:bg-neutral-700">
+                Polityka
+              </a>
+              <a href="/kategoria/administracja" class="block border-b border-neutral-200 dark:border-neutral-700 p-4 hover:bg-neutral-100 dark:hover:bg-neutral-700">
+                Administracja
+              </a>
+              <a href="/kategoria/technologia" class="block p-4 hover:bg-neutral-100 dark:hover:bg-neutral-700">
+                Technologia
+              </a>
+            </div>
+            
+            <a href="/tag" class="inline-flex items-center mt-6 text-primary-color">
+              <span>Wszystkie tagi</span>
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+              </svg>
+            </a>
+          </div>
+        </div>
+      </div>
+		</main>
+		<Footer />
+    
+    <script>
+      // Skrypt do filtrowania artykułów według typu
+      document.addEventListener('DOMContentLoaded', () => {
+        const filterButtons = document.querySelectorAll('.type-filter');
+        const postItems = document.querySelectorAll('.post-item');
+        
+        filterButtons.forEach(button => {
+          button.addEventListener('click', () => {
+            // Usuń klasę active ze wszystkich przycisków
+            filterButtons.forEach(btn => btn.classList.remove('active'));
+            
+            // Dodaj klasę active do klikniętego przycisku
+            button.classList.add('active');
+            
+            const type = button.getAttribute('data-type');
+            
+            if (!type || button.id === 'filter-all') {
+              // Pokaż wszystkie
+              postItems.forEach(item => {
+                item.style.display = 'block';
+              });
+            } else {
+              // Filtruj według typu
+              postItems.forEach(item => {
+                if (item.getAttribute('data-type') === type) {
+                  item.style.display = 'block';
+                } else {
+                  item.style.display = 'none';
+                }
+              });
+            }
+          });
+        });
+      });
+    </script>
+	</body>
+</html>

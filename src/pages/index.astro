@@ -5,13 +5,38 @@ import Footer from '../components/Footer.astro';
 import { SITE_TITLE, SITE_DESCRIPTION } from '../consts';
 import { getCollection } from 'astro:content';
 import MasonryGrid from '../components/MasonryGrid';
+import { formatDate } from '../utils/date';
 
 // Pobierz wszystkie wpisy, posortowane według daty publikacji (od najnowszych)
 const posts = await getCollection('blog');
 const sortedPosts = posts.sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf());
 
-// Pobierz wszystkie unikalne tagi
-const allTags = [...new Set(posts.flatMap(post => post.data.tags))];
+// Wyróżnione wpisy
+const featuredPosts = sortedPosts.filter(post => post.data.featured);
+const regularPosts = sortedPosts.filter(post => !post.data.featured);
+
+// Pobierz wszystkie unikalne tagi i zlicz ich wystąpienia
+const tagCounts = sortedPosts.reduce((acc, post) => {
+  const tags = post.data.tags || [];
+  tags.forEach(tag => {
+    acc[tag] = (acc[tag] || 0) + 1;
+  });
+  return acc;
+}, {} as Record<string, number>);
+
+// Najbardziej popularne tagi
+const popularTags = Object.entries(tagCounts)
+  .sort((a, b) => b[1] - a[1])
+  .slice(0, 10)
+  .map(([tag]) => tag);
+
+// Typy postów
+const typeIcons = {
+  text: '<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" /></svg>',
+  video: '<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>',
+  audio: '<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15.536a5 5 0 001.414 1.414m-2.829-9.9a9 9 0 0112.728 0" /></svg>',
+  infographic: '<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>'
+};
 ---
 
 <!doctype html>
@@ -19,39 +44,111 @@ const allTags = [...new Set(posts.flatMap(post => post.data.tags))];
 	<head>
 		<BaseHead title={SITE_TITLE} description={SITE_DESCRIPTION} />
 	</head>
-	<body class="bg-gray-100 dark:bg-gray-900">
+	<body>
 		<Header />
-		<main class="max-w-7xl mx-auto px-4 py-8">
-			<section class="mb-12">
-				<h1 class="text-4xl font-bold text-center mb-6 text-gray-900 dark:text-white">
-					Innowacje dla Polski
-				</h1>
-				<p class="text-xl text-center max-w-3xl mx-auto text-gray-700 dark:text-gray-300">
-					Blog o innowacjach społecznych, politycznych, administracyjnych i innych, 
-					które mogą pomóc Polsce w rozwoju i rozwiązaniu najważniejszych problemów.
-				</p>
-			</section>
+		<div class="bg-gradient-to-b from-primary-very-light to-transparent dark:from-primary-dark/10 dark:to-transparent py-12 mb-8">
+			<div class="container">
+				<section class="mb-12 text-center">
+					<h1 class="text-4xl md:text-5xl font-bold mb-6">
+						Innowacje dla Polski
+					</h1>
+					<p class="text-xl max-w-2xl mx-auto text-neutral-700 dark:text-neutral-300">
+						Blog o innowacjach społecznych, politycznych, administracyjnych i innych, 
+						które mogą pomóc Polsce w rozwoju i rozwiązaniu najważniejszych problemów.
+					</p>
+					
+					<div class="mt-10 flex justify-center">
+						<div class="relative max-w-xl w-full">
+							<input 
+								type="search" 
+								placeholder="Szukaj artykułów..."
+								class="w-full py-3 px-5 rounded-full border-2 border-neutral-300 focus:border-primary-color focus:outline-none"
+							/>
+							<button class="absolute right-2 top-1/2 transform -translate-y-1/2 bg-primary-color text-white p-2 rounded-full">
+								<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+								</svg>
+							</button>
+						</div>
+					</div>
+				</section>
+			</div>
+		</div>
 
-			<section class="mb-12">
-				<div class="flex justify-between items-center mb-6">
-					<h2 class="text-2xl font-bold text-gray-900 dark:text-white">Najnowsze artykuły</h2>
-					<a href="/blog" class="text-blue-600 dark:text-blue-400 hover:underline">Zobacz wszystkie</a>
+		<main class="container">
+			{featuredPosts.length > 0 && (
+				<section class="mb-16">
+					<div class="flex justify-between items-center mb-8">
+						<h2 class="text-2xl font-bold">Wyróżnione</h2>
+					</div>
+					<div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+						{featuredPosts.slice(0, 2).map(post => (
+							<div class="post-card h-full">
+								<a href={`/${post.slug}`} class="block h-full">
+									{post.data.heroImage && (
+										<img 
+											src={post.data.heroImage} 
+											alt={post.data.title} 
+											class="w-full h-60 object-cover rounded-t-lg"
+										/>
+									)}
+									<div class="p-6">
+										<h3 class="text-xl font-bold mb-3">{post.data.title}</h3>
+										<p class="text-neutral-600 dark:text-neutral-300 mb-4">{post.data.description}</p>
+										<div class="flex justify-between items-center text-neutral-500 dark:text-neutral-400 text-sm">
+											<span>{new Date(post.data.pubDate).toLocaleDateString('pl-PL')}</span>
+											<span class="btn-primary text-xs py-1 px-3">Czytaj więcej</span>
+										</div>
+									</div>
+								</a>
+							</div>
+						))}
+					</div>
+				</section>
+			)}
+
+			<section class="mb-16">
+				<div class="flex justify-between items-center mb-8">
+					<h2 class="text-2xl font-bold">Wszystkie artykuły</h2>
 				</div>
 				
-				<MasonryGrid posts={sortedPosts.slice(0, 9)} client:load />
+				<MasonryGrid posts={sortedPosts} client:load />
 			</section>
 
-			<section class="mb-12">
-				<h2 class="text-2xl font-bold mb-6 text-gray-900 dark:text-white">Popularne tematy</h2>
-				<div class="flex flex-wrap gap-3">
-					{allTags.map(tag => (
-						<a 
-							href={`/tags/${tag}`} 
-							class="px-4 py-2 bg-white dark:bg-gray-800 rounded-full text-gray-700 dark:text-gray-300 shadow hover:bg-blue-100 dark:hover:bg-blue-900 transition"
-						>
-							{tag}
+			<section class="mb-16 grid grid-cols-1 md:grid-cols-3 gap-8">
+				<div class="md:col-span-2">
+					<h2 class="text-2xl font-bold mb-6">Popularne kategorie</h2>
+					<div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+						<a href="/kategoria/innowacje-spoleczne" class="bg-white dark:bg-neutral-800 p-5 rounded-lg shadow hover:shadow-lg transition-shadow">
+							<h3 class="text-lg font-semibold mb-2">Innowacje społeczne</h3>
+							<p class="text-neutral-600 dark:text-neutral-400 text-sm">Pomysły i rozwiązania służące rozwiązywaniu problemów społecznych w Polsce</p>
 						</a>
-					))}
+						<a href="/kategoria/polityka" class="bg-white dark:bg-neutral-800 p-5 rounded-lg shadow hover:shadow-lg transition-shadow">
+							<h3 class="text-lg font-semibold mb-2">Polityka</h3>
+							<p class="text-neutral-600 dark:text-neutral-400 text-sm">Innowacje w dziedzinie polityki i zarządzania państwem</p>
+						</a>
+						<a href="/kategoria/administracja" class="bg-white dark:bg-neutral-800 p-5 rounded-lg shadow hover:shadow-lg transition-shadow">
+							<h3 class="text-lg font-semibold mb-2">Administracja</h3>
+							<p class="text-neutral-600 dark:text-neutral-400 text-sm">Usprawnianie procesów administracyjnych i biurokratycznych</p>
+						</a>
+						<a href="/kategoria/technologia" class="bg-white dark:bg-neutral-800 p-5 rounded-lg shadow hover:shadow-lg transition-shadow">
+							<h3 class="text-lg font-semibold mb-2">Technologia</h3>
+							<p class="text-neutral-600 dark:text-neutral-400 text-sm">Wykorzystanie technologii w służbie społeczeństwa</p>
+						</a>
+					</div>
+				</div>
+				
+				<div>
+					<h2 class="text-2xl font-bold mb-6">Popularne tagi</h2>
+					<div class="bg-white dark:bg-neutral-800 p-5 rounded-lg shadow">
+						<div class="flex flex-wrap gap-2">
+							{popularTags.map(tag => (
+								<a href={`/tag/${tag}`} class="tag">
+									{tag}
+								</a>
+							))}
+						</div>
+					</div>
 				</div>
 			</section>
 		</main>

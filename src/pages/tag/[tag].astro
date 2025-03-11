@@ -1,0 +1,152 @@
+---
+import BaseHead from '../../components/BaseHead.astro';
+import Header from '../../components/Header.astro';
+import Footer from '../../components/Footer.astro';
+import { SITE_TITLE } from '../../consts';
+import { getCollection } from 'astro:content';
+import MasonryGrid from '../../components/MasonryGrid';
+
+export async function getStaticPaths() {
+  const posts = await getCollection('blog');
+  
+  // Zbierz wszystkie unikalne tagi
+  const allTags = [...new Set(posts.flatMap(post => post.data.tags || []))];
+  
+  // Stwórz ścieżki dla każdego tagu
+  return allTags.map(tag => {
+    const filteredPosts = posts
+      .filter(post => (post.data.tags || []).includes(tag))
+      .sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf());
+    
+    return {
+      params: { tag },
+      props: { 
+        posts: filteredPosts,
+        tag,
+      }
+    };
+  });
+}
+
+const { tag } = Astro.params;
+const { posts } = Astro.props;
+
+// Pobierz wszystkie unikalne tagi z postów z danego tagu
+const relatedTags = [...new Set(posts.flatMap(post => (post.data.tags || [])))]
+  .filter(t => t !== tag)
+  .slice(0, 10);
+
+// Pobieramy tytuł i opis tagu z kolekcji tagów, jeśli istnieje
+const tagCollection = await getCollection('tags');
+const tagInfo = tagCollection.find(t => t.id === tag)?.data || { name: tag, description: `Artykuły na temat: ${tag}` };
+
+// Funkcja do określenia nazwy kategorii na podstawie tagu
+function getCategorySlug(tagName) {
+  const categoryMappings = {
+    'innowacje-spoleczne': 'innowacje-spoleczne',
+    'społeczeństwo': 'innowacje-spoleczne',
+    'pomoc-społeczna': 'innowacje-spoleczne',
+    'edukacja': 'innowacje-spoleczne',
+    'zdrowie': 'innowacje-spoleczne',
+    
+    'polityka': 'polityka',
+    'demokracja': 'polityka',
+    'wybory': 'polityka',
+    'prawo': 'polityka',
+    'konstytucja': 'polityka',
+    
+    'administracja': 'administracja',
+    'biurokracja': 'administracja',
+    'e-administracja': 'administracja',
+    'urzędy': 'administracja',
+    'procedury': 'administracja',
+    
+    'technologia': 'technologia',
+    'innowacje': 'technologia',
+    'it': 'technologia',
+    'ai': 'technologia',
+    'cyfryzacja': 'technologia',
+  };
+  
+  return categoryMappings[tagName] || null;
+}
+
+const categorySlug = getCategorySlug(tag);
+---
+
+<!doctype html>
+<html lang="pl">
+	<head>
+		<BaseHead 
+      title={`${tagInfo.name} | ${SITE_TITLE}`} 
+      description={tagInfo.description}
+    />
+	</head>
+	<body>
+		<Header />
+    <div class="bg-gradient-to-b from-primary-very-light to-transparent dark:from-primary-dark/10 dark:to-transparent">
+      <div class="container py-12">
+        <div class="max-w-3xl mx-auto">
+          <div class="flex items-center gap-2 mb-4">
+            <a href="/tag" class="text-sm text-neutral-600 dark:text-neutral-400 hover:text-primary-color">Wszystkie tagi</a>
+            <span class="text-neutral-400">/</span>
+            <h1 class="text-3xl md:text-4xl font-bold">#{tagInfo.name}</h1>
+          </div>
+          
+          {tagInfo.description && (
+            <p class="text-lg mb-6 text-neutral-700 dark:text-neutral-300">{tagInfo.description}</p>
+          )}
+          
+          <div class="flex items-center text-sm text-neutral-600 dark:text-neutral-400">
+            <span>
+              <strong>{posts.length}</strong> {posts.length === 1 ? 'artykuł' : posts.length < 5 ? 'artykuły' : 'artykułów'}
+            </span>
+            
+            {categorySlug && (
+              <div class="flex items-center ml-4">
+                <span class="mr-2">Kategoria:</span>
+                <a 
+                  href={`/kategoria/${categorySlug}`} 
+                  class="bg-white dark:bg-neutral-800 px-3 py-1 rounded-full text-primary-color dark:text-primary-light text-sm font-medium hover:bg-primary-very-light dark:hover:bg-primary-dark/20"
+                >
+                  {categorySlug.charAt(0).toUpperCase() + categorySlug.slice(1).replace('-', ' ')}
+                </a>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+    
+		<main class="container py-12">
+      {posts.length > 0 ? (
+        <section class="mb-16">
+          <MasonryGrid posts={posts} client:load />
+        </section>
+      ) : (
+        <div class="text-center py-12">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 mx-auto text-neutral-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          </svg>
+          <h2 class="text-xl font-semibold mb-2">Brak artykułów z tym tagiem</h2>
+          <p class="mb-6 text-neutral-600 dark:text-neutral-400">Wkrótce pojawią się nowe wpisy z tym tagiem.</p>
+          <a href="/" class="btn btn-primary">Powrót do strony głównej</a>
+        </div>
+      )}
+      
+      {relatedTags.length > 0 && (
+        <section>
+          <h2 class="text-2xl font-bold mb-6">Powiązane tagi</h2>
+          <div class="flex flex-wrap gap-3">
+            {relatedTags.map(relatedTag => (
+              <a href={`/tag/${relatedTag}`} class="tag">
+                {relatedTag}
+              </a>
+            ))}
+          </div>
+        </section>
+      )}
+		</main>
+		<Footer />
+	</body>
+</html>
