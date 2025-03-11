@@ -6,6 +6,24 @@
       "name": "Development server",
       "request": "launch",
       "type": "node-terminal"
+    },
+    {
+      "type": "chrome",
+      "request": "launch",
+      "name": "Uruchom Chrome z projektem",
+      "url": "http://localhost:4444",
+      "webRoot": "${workspaceFolder}",
+      "preLaunchTask": "Start Development Server",
+      "sourceMaps": true
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Debug Testy Playwright",
+      "cwd": "${workspaceFolder}",
+      "program": "${workspaceFolder}/node_modules/.bin/playwright",
+      "args": ["test", "--debug"],
+      "console": "integratedTerminal"
     }
   ]
 }
