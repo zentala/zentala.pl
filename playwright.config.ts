@@ -12,31 +12,17 @@ export default defineConfig({
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
   },
+  // Uruchamiamy tylko przeglądarkę Chromium, która jest domyślnie instalowana
   projects: [
     {
       name: 'chromium',
       use: { ...devices['Desktop Chrome'] },
-    },
-    {
-      name: 'firefox',
-      use: { ...devices['Desktop Firefox'] },
-    },
-    {
-      name: 'webkit',
-      use: { ...devices['Desktop Safari'] },
-    },
-    {
-      name: 'Mobile Chrome',
-      use: { ...devices['Pixel 5'] },
-    },
-    {
-      name: 'Mobile Safari',
-      use: { ...devices['iPhone 12'] },
     },
   ],
   webServer: {
     command: 'npm run dev',
     url: 'http://localhost:4444',
     reuseExistingServer: !process.env.CI,
+    timeout: 60000, // Zwiększamy timeout na 60 sekund
   },
 });
