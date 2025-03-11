@@ -14,8 +14,8 @@ const isActive = href === pathname || href === '/' + (subpath?.[0] || '');
   class:list={[
     "px-3 py-2 rounded-md text-sm font-medium transition-colors",
     isActive 
-      ? "text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20" 
-      : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700",
+      ? "text-primary-color dark-theme:text-primary-light bg-primary-very-light dark-theme:bg-neutral-800" 
+      : "text-neutral-700 dark-theme:text-neutral-300 hover:bg-neutral-100 dark-theme:hover:bg-neutral-700",
     className
   ]}
   {...props}

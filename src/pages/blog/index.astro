@@ -2,110 +2,125 @@
 import BaseHead from '../../components/BaseHead.astro';
 import Header from '../../components/Header.astro';
 import Footer from '../../components/Footer.astro';
-import { SITE_TITLE, SITE_DESCRIPTION } from '../../consts';
+import { SITE_TITLE } from '../../consts';
 import { getCollection } from 'astro:content';
-import FormattedDate from '../../components/FormattedDate.astro';
+import MasonryGrid from '../../components/MasonryGrid';
+import { formatDate } from '../../utils/date';
 
-const posts = (await getCollection('blog')).sort(
-	(a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf(),
-);
+// Pobierz wszystkie wpisy, posortowane według daty publikacji (od najnowszych)
+const posts = await getCollection('blog');
+const sortedPosts = posts.sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf());
+
+// Pobierz unikalne typy postów i zlicz ich wystąpienia
+const typeCounts = sortedPosts.reduce((acc, post) => {
+  const type = post.data.type || 'text';
+  acc[type] = (acc[type] || 0) + 1;
+  return acc;
+}, {} as Record<string, number>);
+
+// Przygotuj mapę ikon typów
+const typeIcons = {
+  text: '<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" /></svg>',
+  video: '<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>',
+  audio: '<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15.536a5 5 0 001.414 1.414m-2.829-9.9a9 9 0 0112.728 0" /></svg>',
+  infographic: '<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>'
+};
+
+// Etykiety typów po polsku
+const typeLabels = {
+  text: 'Tekst',
+  video: 'Wideo',
+  audio: 'Audio',
+  infographic: 'Infografika'
+};
 ---
 
 <!doctype html>
-<html lang="en">
+<html lang="pl">
 	<head>
-		<BaseHead title={SITE_TITLE} description={SITE_DESCRIPTION} />
-		<style>
-			main {
-				width: 960px;
-			}
-			ul {
-				display: flex;
-				flex-wrap: wrap;
-				gap: 2rem;
-				list-style-type: none;
-				margin: 0;
-				padding: 0;
-			}
-			ul li {
-				width: calc(50% - 1rem);
-			}
-			ul li * {
-				text-decoration: none;
-				transition: 0.2s ease;
-			}
-			ul li:first-child {
-				width: 100%;
-				margin-bottom: 1rem;
-				text-align: center;
-			}
-			ul li:first-child img {
-				width: 100%;
-			}
-			ul li:first-child .title {
-				font-size: 2.369rem;
-			}
-			ul li img {
-				margin-bottom: 0.5rem;
-				border-radius: 12px;
-			}
-			ul li a {
-				display: block;
-			}
-			.title {
-				margin: 0;
-				color: rgb(var(--black));
-				line-height: 1;
-			}
-			.date {
-				margin: 0;
-				color: rgb(var(--gray));
-			}
-			ul li a:hover h4,
-			ul li a:hover .date {
-				color: rgb(var(--accent));
-			}
-			ul a:hover img {
-				box-shadow: var(--box-shadow);
-			}
-			@media (max-width: 720px) {
-				ul {
-					gap: 0.5em;
-				}
-				ul li {
-					width: 100%;
-					text-align: center;
-				}
-				ul li:first-child {
-					margin-bottom: 0;
-				}
-				ul li:first-child .title {
-					font-size: 1.563em;
-				}
-			}
-		</style>
+		<BaseHead title={`Blog | ${SITE_TITLE}`} description="Pełna lista artykułów o innowacjach społecznych, politycznych i administracyjnych" />
 	</head>
 	<body>
 		<Header />
-		<main>
-			<section>
-				<ul>
-					{
-						posts.map((post) => (
-							<li>
-								<a href={`/blog/${post.id}/`}>
-									<img width={720} height={360} src={post.data.heroImage} alt="" />
-									<h4 class="title">{post.data.title}</h4>
-									<p class="date">
-										<FormattedDate date={post.data.pubDate} />
-									</p>
-								</a>
-							</li>
-						))
-					}
-				</ul>
-			</section>
+    <div class="bg-gradient-to-b from-primary-very-light to-transparent dark:from-primary-dark/10 dark:to-transparent">
+      <div class="container py-12">
+        <div class="max-w-3xl mx-auto">
+          <h1 class="text-3xl md:text-4xl font-bold mb-4">Blog</h1>
+          <p class="text-lg mb-6 text-neutral-700 dark:text-neutral-300">
+            Wszystkie artykuły o innowacjach dla Polski
+          </p>
+          
+          <div class="flex flex-col sm:flex-row gap-4 mt-8">
+            <div class="flex items-center">
+              <span class="text-sm text-neutral-600 dark:text-neutral-400 mr-4">
+                <strong>{sortedPosts.length}</strong> {sortedPosts.length === 1 ? 'artykuł' : sortedPosts.length < 5 ? 'artykuły' : 'artykułów'}
+              </span>
+            </div>
+            
+            <div class="flex flex-wrap gap-2">
+              <button 
+                id="filter-all" 
+                class="type-filter active bg-white dark:bg-neutral-800 rounded-full px-4 py-2 text-sm shadow"
+              >
+                Wszystkie
+              </button>
+              
+              {Object.entries(typeCounts).map(([type, count]) => (
+                <button 
+                  id={`filter-${type}`}
+                  class="type-filter flex items-center gap-2 bg-white dark:bg-neutral-800 rounded-full px-4 py-2 text-sm shadow"
+                  data-type={type}
+                >
+                  <Fragment set:html={typeIcons[type as keyof typeof typeIcons] || typeIcons.text} />
+                  {typeLabels[type as keyof typeof typeLabels] || type}
+                  <span class="text-neutral-500">({count})</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+		<main class="container py-12">
+      <MasonryGrid posts={sortedPosts} client:load />
 		</main>
 		<Footer />
+    
+    <script>
+      // Skrypt do filtrowania artykułów według typu
+      document.addEventListener('DOMContentLoaded', () => {
+        const filterButtons = document.querySelectorAll('.type-filter');
+        const postItems = document.querySelectorAll('.post-item');
+        
+        filterButtons.forEach(button => {
+          button.addEventListener('click', () => {
+            // Usuń klasę active ze wszystkich przycisków
+            filterButtons.forEach(btn => btn.classList.remove('active'));
+            
+            // Dodaj klasę active do klikniętego przycisku
+            button.classList.add('active');
+            
+            const type = button.getAttribute('data-type');
+            
+            if (!type || button.id === 'filter-all') {
+              // Pokaż wszystkie
+              postItems.forEach(item => {
+                item.style.display = 'block';
+              });
+            } else {
+              // Filtruj według typu
+              postItems.forEach(item => {
+                if (item.getAttribute('data-type') === type) {
+                  item.style.display = 'block';
+                } else {
+                  item.style.display = 'none';
+                }
+              });
+            }
+          });
+        });
+      });
+    </script>
 	</body>
 </html>

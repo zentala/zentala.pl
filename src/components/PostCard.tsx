@@ -129,7 +129,7 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
 
   return (
     <div 
-      className={`post-card ${sizeClasses} flex flex-col h-full`}
+      className={`post-card ${sizeClasses} flex flex-col h-full transition-shadow`}
       data-size={size}
     >
       <a href={`/blog/${id}`} className="block h-full">
@@ -147,9 +147,9 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
               </a>
             ))}
           </div>
-          <h2 className="text-xl font-bold mb-3 text-neutral-800 dark:text-neutral-100">{title}</h2>
-          <p className="text-neutral-600 dark:text-neutral-300 text-sm mb-4 flex-grow">{truncatedDescription}</p>
-          <div className="flex justify-between items-center text-neutral-500 dark:text-neutral-400 text-xs mt-auto">
+          <h2 className="text-xl font-bold mb-3 text-neutral-800 dark-theme:text-neutral-100 transition-colors">{title}</h2>
+          <p className="text-neutral-600 dark-theme:text-neutral-300 text-sm mb-4 flex-grow transition-colors">{truncatedDescription}</p>
+          <div className="flex justify-between items-center text-neutral-500 dark-theme:text-neutral-400 text-xs mt-auto transition-colors">
             <span>{formatDate(pubDate)}</span>
             <div className="flex items-center space-x-4">
               <span className="flex items-center">

@@ -1,0 +1,36 @@
+:root {
+  /* Główna paleta kolorów */
+  --primary-color: #2563eb; /* Niebieski - innowacyjny, profesjonalny */
+  --primary-dark: #1d4ed8; /* Ciemniejszy niebieski dla hover */
+  --primary-light: #3b82f6; /* Jaśniejszy niebieski dla tła */
+  --primary-very-light: #e0f2fe; /* Bardzo jasny niebieski dla subtelnych elementów */
+  
+  /* Akcenty */
+  --accent-color: #0ea5e9; /* Turkusowy - świeży, nowoczesny */
+  --accent-dark: #0369a1; /* Ciemniejsza wersja akcentu */
+  --accent-light: #7dd3fc; /* Jaśniejsza wersja akcentu */
+  
+  /* Neutralne */
+  --neutral-900: #0f172a; /* Bardzo ciemny - dla tekstów */
+  --neutral-800: #1e293b; /* Ciemny - dla nagłówków */
+  --neutral-700: #334155; /* Dla napisów sekundarne */
+  --neutral-600: #475569; /* Dla mniej ważnych napisów */
+  --neutral-500: #64748b; /* Dla elementów UI */
+  --neutral-400: #94a3b8; /* Dla płaskich ikon, linii */
+  --neutral-300: #cbd5e1; /* Dla krawędzi, separatorów */
+  --neutral-200: #e2e8f0; /* Dla tła paneli */
+  --neutral-100: #f1f5f9; /* Dla tła strony */
+  --neutral-50: #f8fafc; /* Dla tła podświetlonych elementów */
+  
+  /* Kolory systemowe */
+  --success: #22c55e; /* Zielony - sukces */
+  --warning: #eab308; /* Żółty - ostrzeżenie */
+  --error: #ef4444; /* Czerwony - błąd */
+  --info: #0ea5e9; /* Niebieski - informacja */
+  
+  /* Tło i tekst */
+  --bg-light: var(--neutral-50);
+  --bg-dark: var(--neutral-900);
+  --text-light: var(--neutral-50);
+  --text-dark: var(--neutral-900);
+}
